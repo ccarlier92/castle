@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Relais et Châteaux avec restaurants étoilés</title>
+    <!--<link rel="stylesheet" href="css/bootstrap.min.css">-->
+    <link rel="stylesheet" href="web.css">
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>-->
+</head>
+<body>
+<div class="container">
+    <div class="table-responsive">
+        <h1 class="display-4">Lecture et parsing des résultats</h1>
+        <button class="btn btn-success btn-lg" id="lecture">Lecture</button>
+        <p><br></p>
+        <table class="table table-bordered table-striped table-hover" id="result_table">
+            <thead>
+            <tr>
+                <th>N°</th>
+                <th>Hôtel</th>
+                <th>Restaurant</th>
+                <th>Code postal</th>
+                <th>Chef</th>
+                <th>Prix</th>
+                <th>URL</th>
+            </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+</body>
+</html>
+
+
+<script>
+    $('#lecture').on('click', function(){
+        $.getJSON("RelaisChateauEtoiles.json", function(result){
+            var items = [];
+            $.each(result, function(key, val){
+                items.push("<tr>");
+                items.push("<td id = ''"+key+"''>"+(key+1)+"</td>");
+                items.push("<td id = ''"+key+"''>"+val.name+"</td>");
+                items.push("<td id = ''"+key+"''>"+val.name+"</td>");
+                items.push("<td id = ''"+key+"''>"+val.postalCode+"</td>");
+                items.push("<td id = ''"+key+"''>"+val.chef+"</td>");
+                items.push("<td id = ''"+key+"''>"+val.price+"</td>");
+                items.push("<td id = ''"+key+"''>"+val.url+"</td>");
+                items.push("</tr>");
+            });
+            $("<tbody/>", {html:items.join("")}).appendTo("table");
+        );
+    });
+    });
+</script>

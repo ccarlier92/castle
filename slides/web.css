@@ -1,0 +1,15 @@
+.back{
+    height: 1200px;
+    background-color: rgb(245,245,245);
+}
+.top{
+    background-color: #034f84;
+    padding : 5% 15%;
+    text-align: center;
+}
+.headtitle{
+    color: #80ced6;
+}
+.floatingleft{
+    float: left;
+}
