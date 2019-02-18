@@ -1,43 +1,35 @@
-var Promise = require('promise');
 var request = require('request');
 var cheerio = require('cheerio');
 var fs = require('fs');
+var Promise = require('promise');
 
 var promises = [];
-var eachPromises= [];
+var eachPromises = [];
 var hotels = [];
-var scraping = 1;
+var scraping = 0;
 
-function createPromise()
-{
-    let url = 'https://www.relaischateaux.com/fr/site-map/etablissements';
-    promises.push(getHotels(url));
+function createPromise() {
+    let url = 'https://www.relaischateaux.com/fr/site-map/etablissements'
+    promises.push(getHotels(/*proxyUrl + */url));
 }
 
-function getHotels(url)
-{
-    return new Promise(function (resolve, reject)
-    {
-        request(url, function (error, response, html)
-        {
-            if(error)
-            {
-                console.log(error);
-                return reject(error);
+function getHotels(url) {
+    return new Promise(function (resolve, reject) {
+        request(url, function (err, res, html) {
+            if (err) {
+                console.log(err)
+                return reject(err);
             }
-            else if (response.statusCode !== 200)
-
-            {
-                error = new Error("Unexpected status code :" + response.statusCode);
-                error.response = response;
-                return reject(error);
-            }           //if (!error && response.statusCode == 200)
-
+            else if (res.statusCode !== 200) {
+                err = new Error("Unexpected status code : " + res.statusCode);
+                err.res = res;
+                return reject(err);
+            }
             var $ = cheerio.load(html);
+
             let frenchHotels = $('h3:contains("France")').next();
             frenchHotels.find('li').length
-            frenchHotels.find('li').each(function ()
-            {
+            frenchHotels.find('li').each(function () {
                 let data = $(this);
                 let url = String(data.find('a').attr("href"));
                 let name = data.find('a').first().text();
@@ -47,76 +39,71 @@ function getHotels(url)
                 hotels.push({ "name": name.trim(), "postalCode": "", "chef": chefName.trim(), "url": url, "price": "" })
             })
             resolve(hotels);
-
-
         });
     });
 }
 
-
-function createEachPromises()
-{
-    return new Promise(function (resolve, reject)
-    {
-        if (scraping === 1) {
+function createEachPromise() {
+    return new Promise(function (resolve, reject) {
+        if (scraping === 0) {
             for (let i = 0; i < Math.trunc(hotels.length / 2); i++) {
-                let hotelURL = hotels[i].url;
-                eachPromises.push(getHotelInfo(hotelURL, i));
-                //console.log("Added url of " + i + "th hotel to the promises list");
+                let hotelURL = hotels [i].url;
+                eachPromises.push(getInfos(/*proxyUrl + */hotelURL, i));
+
             }
             resolve();
             scraping++;
-        } else if (scraping === 2) {
+        }
+        else if (scraping === 1) {
             for (let i = hotels.length / 2; i < Math.trunc(hotels.length); i++) {
-                let hotelURL = hotels[i].url;
-                eachPromises.push(getHotelInfo(hotelURL, i));
-                //console.log("Added url of " + i + "th hotel to the promises list");
+                let hotelURL = hotels [i].url;
+                eachPromises.push(getInfos(/*proxyUrl + */hotelURL, i));
+
             }
             resolve();
         }
     })
 }
 
-function getHotelInfo(url, index) {
+
+function getInfos(url, index) {
     return new Promise(function (resolve, reject) {
         request(url, function (error, response, html) {
-            if(error)
-            {
+            if (error) {
                 console.error(error);
                 return reject(error);
             }
-            else if (response.statusCode !== 200)
-            {
-                error = new Error("Unexpected status code :" + response.statusCode);
-                error.response = response;
+            else if (response.statusCode !== 200) {
+                error = new Error("Unexpected status code : " + response.statusCode);
+                error.res = response;
                 return reject(error);
             }
+
             const $ = cheerio.load(html);
 
             $('span[itemprop="postalCode"]').first().each(function () {
                 let data = $(this);
                 let pc = data.text();
                 hotels[index].postalCode = String(pc.split(',')[0]).trim();
-            });
+            })
 
             $('.price').first().each(function () {
                 let data = $(this);
                 let price = data.text();
                 hotels[index].price = String(price);
-            });
-            console.log("Added postal code and price of " + index + "th hotel");
+            })
+
             resolve(hotels);
         });
     });
 }
 
-function createJSONforHotels() {
+function createJson() {
     return new Promise(function (resolve, reject) {
         try {
-            //console.log("Editing JSON file");
             var jsonHotels = JSON.stringify(hotels);
-            fs.writeFile("Relais.json", jsonHotels, function doneWriting(error) {
-                if (error) { console.log(error); }
+            fs.writeFile("Hotels.json", jsonHotels, function doneWriting(err) {
+                if (err) { console.log(err); }
             });
         }
         catch (error) {
@@ -126,17 +113,16 @@ function createJSONforHotels() {
     });
 }
 
-//main
 createPromise();
-var _promise =  promises[0];
-_promise
-    .then(createEachPromises)
+var prom = promises[0];
+prom
+    .then(createEachPromise())
     .then(() => { return Promise.all(eachPromises); })
-    .then(createEachPromises)
+    .then(createEachPromise())
     .then(() => { return Promise.all(eachPromises); })
-    .then(createJSONforHotels())
-    //.then(() => { console.log("JSON file checked") });
+    .then(createJson)
+
 
 module.exports.getHotelsJSON = function () {
-    return JSON.parse(fs.readFileSync("Relais.json"));
+    return JSON.parse(fs.readFileSync("Hotels.json"));
 };

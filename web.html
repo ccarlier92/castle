@@ -3,10 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <title>Relais et Châteaux avec restaurants étoilés</title>
-    <!--<link rel="stylesheet" href="css/bootstrap.min.css">-->
+    <link rel="stylesheet" href="./bootstrap.min.css">
     <link rel="stylesheet" href="web.css">
-    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+    <div id="logo">
+        <img
+                src="Logo_Relais_et_Chateaux.png"
+                alt="logo"
+                height="100px"
+
+        />
+        <img
+                src="michelin-1.png"
+                alt="logo"
+                height="100px"
+
+        />
+
+    </div>
 </head>
 <body>
 <div class="container">
@@ -34,22 +50,23 @@
 
 
 <script>
+    $(document).ready(function() {
     $('#lecture').on('click', function(){
-        $.getJSON("RelaisChateauEtoiles.json", function(result){
+        $.getJSON("final.json", function(result) {
             var items = [];
-            $.each(result, function(key, val){
+            $.each(result, function (key, val) {
                 items.push("<tr>");
-                items.push("<td id = ''"+key+"''>"+(key+1)+"</td>");
-                items.push("<td id = ''"+key+"''>"+val.name+"</td>");
-                items.push("<td id = ''"+key+"''>"+val.name+"</td>");
-                items.push("<td id = ''"+key+"''>"+val.postalCode+"</td>");
-                items.push("<td id = ''"+key+"''>"+val.chef+"</td>");
-                items.push("<td id = ''"+key+"''>"+val.price+"</td>");
-                items.push("<td id = ''"+key+"''>"+val.url+"</td>");
+                items.push("<td id = ''" + key + "''>" + (key + 1) + "</td>");
+                items.push("<td id = ''" + key + "''>" + val.name + "</td>");
+                items.push("<td id = ''" + key + "''>" + val.name + "</td>");
+                items.push("<td id = ''" + key + "''>" + val.postalCode + "</td>");
+                items.push("<td id = ''" + key + "''>" + val.chef + "</td>");
+                items.push("<td id = ''" + key + "''>" + val.price + "</td>");
+                items.push("<td id = ''" + key + "''>" + val.url + "</td>");
                 items.push("</tr>");
             });
-            $("<tbody/>", {html:items.join("")}).appendTo("table");
-        );
+            $("<tbody/>", {html: items.join("")}).appendTo("table");
+        });
     });
     });
 </script>

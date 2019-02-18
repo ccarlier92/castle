@@ -1,22 +1,20 @@
-const Promise = require('promise');
-const relais = require('relais_scraping.js');
-const michelin = require('michelin_scraping.js');
-const fs = require('fs');
-
+const hotels = require('./relais_scraping.js');
+const restaurants = require('./michelin_scraping.js');
+let fs = require('fs');
 
 'use strict';
 
-const hotelsJSON = relais.getHotelsJSON();
-const michelinJSON = michelin.getRestaurantsJSON();
+const hotelJSON = hotels.getHotelsJSON();
+const michelinJSON = restaurants.getRestaurantsJSON();
 
-fs.writeFileSync("Final.json",JSON.stringify(findMutualDetails(hotelsJSON, michelinJSON)));
+fs.writeFileSync("final.json",JSON.stringify(findMutualDetails(hotelJSON, michelinJSON)));
 
-function findMutualDetails(hotels, michelin) {
+function findMutualDetails(hotels, michelins) {
     let starredHotels = [];
     for (let i = 0; i < hotels.length; i++) {
-        for (let j = 0; j < michelin.length; j++) {
-            if (hotels[i].chef === michelin[j].chef && hotels[i].postalCode === michelin[j].postalCode) {
-                starredHotels.push({"hotelName": hotels[i].name, "restaurantName": michelin[j].name, "postalCode": hotels[i].postalCode, "chef": hotels[i].chef, "url": hotels[i].url, "price": hotels[i].price })
+        for (let j = 0; j < michelins.length; j++) {
+            if (hotels[i].chef === michelins[j].chef && hotels[i].postalCode === michelins[j].postalCode) {
+                starredHotels.push({"hotelName": hotels[i].name, "restaurantName": michelins[j].name, "postalCode": hotels[i].postalCode, "chef": hotels[i].chef, "url": hotels[i].url, "price": hotels[i].price })
             }
         }
     }
