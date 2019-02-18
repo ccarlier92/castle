@@ -1,19 +1,19 @@
-let request = require('request');
-let cheerio = require('cheerio');
-let Promise = require('promise');
-let fs = require('fs');
+var request = require('request');
+var cheerio = require('cheerio');
+var Promise = require('promise');
+var fs = require('fs');
 
-let promises = [];
-let eachPromises= [];
-let restaurants = [];
-let scraping = 1;
+var promises = [];
+var eachPromises= [];
+var restaurants = [];
+var scraping = 1;
 
 function createPromise()
 {
-    for (i = 1; i <= 37; i++) {
+    for (let i = 1; i <= 37; i++) {
         let url = 'https://restaurant.michelin.fr/restaurants/france/restaurants-1-etoile-michelin/restaurants-2-etoiles-michelin/restaurants-3-etoiles-michelin/page-\' + i.toString();'
         promises.push(getRestaurants(url));
-        console.log("Michelin restaurants of the "+ i+  "th page added to the promise list");
+        //console.log("Michelin restaurants of the "+ i+  "th page added to the promise list");
     }
 }
 
@@ -23,8 +23,8 @@ function getRestaurants()
     {
         request(url, function (error, response, html)
         {
-            if (!error && response.statusCode == 200) {
-                let $ = cheerio.load(html);
+            if (!error && response.statusCode === 200) {
+                var $ = cheerio.load(html);
                 $('.poi-card-link').each(function () {
                     let data = $(this);
                     let link = data.attr("href");
@@ -38,21 +38,21 @@ function getRestaurants()
 }
 
 function createEachPromises() {
-    return new Promise(function (resolve) {
-        if (scraping == 1) {
+    return new Promise(function (resolve,reject) {
+        if (scraping === 1) {
             for (let i = 0; i < restaurants.length / 2; i++) {
                 let restaurantURL = restaurants[i].url;
                 eachPromises.push(getRestaurantInfo(restaurantURL, i));
-                console.log("Added url of " + i + "th restaurant to the promises list");
+                //console.log("Added url of " + i + "th restaurant to the promises list");
             }
             resolve();
             scraping++;
         }
-        if (scraping == 2) {
+        if (scraping === 2) {
             for (i = restaurants.length / 2; i < restaurants.length; i++) {
                 let restaurantURL = restaurants[i].url;
                 eachPromises.push(getRestaurantInfo(restaurantURL, i));
-                console.log("Added url of " + i + "th restaurant to the promises list");
+                //console.log("Added url of " + i + "th restaurant to the promises list");
             }
             resolve();
         }
@@ -61,7 +61,7 @@ function createEachPromises() {
 function getRestaurantInfo(url, index) {
     return new Promise(function (resolve, reject) {
         request(url, function (error, response, html) {
-            if(!error && response.statusCode == 200)
+            if(!error && response.statusCode === 200)
             {
                 let $ = cheerio.load(html);
                 $('.poi_intro-display-title').first().each(function () {
@@ -82,7 +82,7 @@ function getRestaurantInfo(url, index) {
                     let chefName = data.text();
                     restaurants[index].chef = chefName;
                 });
-                console.log("Added info of " + index + "th restaurant");
+                //console.log("Added info of " + index + "th restaurant");
                 resolve(restaurants);
             }
         });
@@ -93,9 +93,9 @@ function createJSONforRestaurants()
 {
     return new Promise(function (resolve) {
         try {
-            console.log("Editing JSON file");
+            //console.log("Editing JSON file");
             let jsonRestaurants = JSON.stringify(restaurants);
-            fs.writeFile("ListeRestaurants.json", jsonRestaurants, function doneWriting(error) {
+            fs.writeFile("Michelin.json", jsonRestaurants, function doneWriting(error) {
                 if (error) { console.error(error); }
             });
         }
@@ -114,8 +114,8 @@ _promise
     .then(createEachPromises)
     .then(() => { return Promise.all(eachPromises); })
     .then(createJSONforRestaurants())
-    .then(() => { console.log("JSON file checked") });
+    //.then(() => { console.log("JSON file checked") });
 
 module.exports.getRestaurantsJSON = function () {
-    return JSON.parse(fs.readFileSync("ListeRestaurants.json"));
+    return JSON.parse(fs.readFileSync("Michelin.json"));
 };

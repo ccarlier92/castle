@@ -1,61 +1,17 @@
-/*const  fetch = require('node-fetch');
-async function sandbox () {
-    const response = await fetch("https://www.relaischateaux.com/fr/update-destination-results", {
-        "credentials" : "include",
-        "headers":{
-            "accept":"*!/!*",
-            "accept-language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-            "cache-control":"no-cache",
-            "content-type":"application/x-www-form-urlencoded; charset=UTF-8",
-            "pragma":"no-cache",
-            "x-requested-width":"XMLHttpRequest"
-        },
-        "referrer":"https://www.relaischateaux.com/fr/destinations/europe/france",
-        "referrerPolicy": "origin-when-cross-origin",
-        "body":"page=1&areaId=78",
-        "method":"POST",
-        "mode":"cors"
-    });
-}*/
+var Promise = require('promise');
+var request = require('request');
+var cheerio = require('cheerio');
+var fs = require('fs');
 
-let Promise = require('promise');
-let request = require('request');
-let cheerio = require('cheerio');
-let fs = require('fs');
-
-let promises = [];
-let eachPromises= [];
-let hotels = [];
-let scraping = 1;
+var promises = [];
+var eachPromises= [];
+var hotels = [];
+var scraping = 1;
 
 function createPromise()
 {
     let url = 'https://www.relaischateaux.com/fr/site-map/etablissements';
     promises.push(getHotels(url));
-    console.log("Relais et Chateaux hotels added to the promise list");
-}
-
-function createEachPromises()
-{
-    return new Promise(function (resolve, reject)
-    {
-        if (scraping === 1) {
-            for (let i = 0; i < Math.trunc(hotels.length / 2); i++) {
-                let hotelURL = hotels[i].url;
-                eachPromises.push(getHotelInfo(hotelURL, i));
-                console.log("Added url of " + i + "th hotel to the promises list");
-            }
-            resolve();
-            scraping++;
-        } else if (scraping === 2) {
-            for (let i = hotels.length / 2; i < Math.trunc(hotels.length); i++) {
-                let hotelURL = hotels[i].url;
-                eachPromises.push(getHotelInfo(hotelURL, i));
-                console.log("Added url of " + i + "th hotel to the promises list");
-            }
-            resolve();
-        }
-    });
 }
 
 function getHotels(url)
@@ -77,7 +33,7 @@ function getHotels(url)
                 return reject(error);
             }           //if (!error && response.statusCode == 200)
 
-            let $ = cheerio.load(url);
+            var $ = cheerio.load(html);
             let frenchHotels = $('h3:contains("France")').next();
             frenchHotels.find('li').length
             frenchHotels.find('li').each(function ()
@@ -89,7 +45,7 @@ function getHotels(url)
                 let chefName = String(data.find('a:contains("Chef")').text().split(' - ')[1]);
                 chefName = chefName.replace(/\n/g, "");
                 hotels.push({ "name": name.trim(), "postalCode": "", "chef": chefName.trim(), "url": url, "price": "" })
-            });
+            })
             resolve(hotels);
 
 
@@ -98,6 +54,28 @@ function getHotels(url)
 }
 
 
+function createEachPromises()
+{
+    return new Promise(function (resolve, reject)
+    {
+        if (scraping === 1) {
+            for (let i = 0; i < Math.trunc(hotels.length / 2); i++) {
+                let hotelURL = hotels[i].url;
+                eachPromises.push(getHotelInfo(hotelURL, i));
+                //console.log("Added url of " + i + "th hotel to the promises list");
+            }
+            resolve();
+            scraping++;
+        } else if (scraping === 2) {
+            for (let i = hotels.length / 2; i < Math.trunc(hotels.length); i++) {
+                let hotelURL = hotels[i].url;
+                eachPromises.push(getHotelInfo(hotelURL, i));
+                //console.log("Added url of " + i + "th hotel to the promises list");
+            }
+            resolve();
+        }
+    })
+}
 
 function getHotelInfo(url, index) {
     return new Promise(function (resolve, reject) {
@@ -113,7 +91,7 @@ function getHotelInfo(url, index) {
                 error.response = response;
                 return reject(error);
             }
-            const $ = cheerio.load(url);
+            const $ = cheerio.load(html);
 
             $('span[itemprop="postalCode"]').first().each(function () {
                 let data = $(this);
@@ -128,19 +106,16 @@ function getHotelInfo(url, index) {
             });
             console.log("Added postal code and price of " + index + "th hotel");
             resolve(hotels);
-
-
-
         });
     });
 }
 
 function createJSONforHotels() {
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
         try {
-            console.log("Editing JSON file");
-            let jsonHotels = JSON.stringify(hotels);
-            fs.writeFile("ListeHotels.json", jsonHotels, function doneWriting(error) {
+            //console.log("Editing JSON file");
+            var jsonHotels = JSON.stringify(hotels);
+            fs.writeFile("Relais.json", jsonHotels, function doneWriting(error) {
                 if (error) { console.log(error); }
             });
         }
@@ -153,15 +128,15 @@ function createJSONforHotels() {
 
 //main
 createPromise();
-let _promise =  promises[0];
+var _promise =  promises[0];
 _promise
     .then(createEachPromises)
     .then(() => { return Promise.all(eachPromises); })
     .then(createEachPromises)
     .then(() => { return Promise.all(eachPromises); })
     .then(createJSONforHotels())
-    .then(() => { console.log("JSON file checked") });
+    //.then(() => { console.log("JSON file checked") });
 
 module.exports.getHotelsJSON = function () {
-    return JSON.parse(fs.readFileSync("ListeHotels.json"));
+    return JSON.parse(fs.readFileSync("Relais.json"));
 };
